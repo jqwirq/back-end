@@ -8,12 +8,14 @@ const mongoose = require("mongoose");
 const {
   importProductsFromCSVs,
   getAllProducts,
+  createProduct,
 } = require("./controllers/productController");
 
 const port = process.env.PORT || 3001;
 const dbUrl = process.env.DB_URL || "mongodb://127.0.0.1:27017/mytest";
 
-router.post("/products/csv", importProductsFromCSVs);
+router.post("/products-csv", importProductsFromCSVs);
+router.post("/product", createProduct);
 router.get("/products", getAllProducts);
 
 main();

@@ -6,14 +6,14 @@ const router = express.Router();
 const server = express();
 const mongoose = require("mongoose");
 const {
-  createProducts,
+  importProductsFromCSVs,
   getAllProducts,
 } = require("./controllers/productController");
 
 const port = process.env.PORT || 3001;
 const dbUrl = process.env.DB_URL || "mongodb://127.0.0.1:27017/mytest";
 
-router.post("/products", createProducts);
+router.post("/products/csv", importProductsFromCSVs);
 router.get("/products", getAllProducts);
 
 main();

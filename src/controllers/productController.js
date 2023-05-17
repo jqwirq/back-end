@@ -1,7 +1,7 @@
 const Product = require("../models/product");
 const Material = require("../models/material");
 
-async function createProducts(req, res) {
+async function importProductsFromCSVs(req, res) {
   try {
     const { data } = req.body;
     const savedProductIds = [];
@@ -211,4 +211,4 @@ async function onta(req, res) {
   }
 }
 
-module.exports = { createProducts, getAllProducts };
+module.exports = { importProductsFromCSVs, getAllProducts };

@@ -24,7 +24,7 @@ async function main() {
   try {
     await mongoose.connect(process.env.DB_URL || dbUrl);
   } catch (err) {
-    console.error(err.message); // This is bad, should return or try again withn 30 sec maybe?
+    console.error(err.message); // This is bad
   }
 
   server.use(express.json());

@@ -12,7 +12,14 @@ async function importProductsFromCSVs(req, res) {
       const existingProduct = await Product.findOne({ no: d.productNo });
       if (existingProduct) {
         return res.status(400).json({
-          message: `A product with number ${d.productNo} already exists`,
+          message: `A product with number ${d.productNo} already exists!`,
+        });
+      }
+
+      // Check for duplicate material
+      if (new Set(d.materialsNo).size !== d.materialsNo.length) {
+        return res.status(400).json({
+          message: `Material contains duplicate values at product number ${d.productNo}!`,
         });
       }
 
@@ -54,7 +61,7 @@ async function importProductsFromCSVs(req, res) {
     return res.status(201).json(populatedProducts);
   } catch (e) {
     return res.status(500).json({
-      message: "An error occurred while creating the product",
+      message: "An error occurred while creating the product.",
       error: e,
     });
   }
@@ -77,7 +84,7 @@ async function getAllProducts(req, res) {
     return res.status(200).json(products);
   } catch (e) {
     return res.status(500).json({
-      message: "An error occurred while retrieving all products",
+      message: "An error occurred while retrieving all products.",
       e,
     });
   }
@@ -91,7 +98,14 @@ async function createProduct(req, res) {
     const existingProduct = await Product.findOne({ no: productNo });
     if (existingProduct) {
       return res.status(400).json({
-        message: `A product with number ${productNo} already exists`,
+        message: `A product with number ${productNo} already exists!`,
+      });
+    }
+
+    // Check for duplicate material
+    if (new Set(materialsNo).size !== materialsNo.length) {
+      return res.status(400).json({
+        message: "Material contains duplicate values",
       });
     }
 
@@ -127,10 +141,12 @@ async function createProduct(req, res) {
       .lean()
       .exec();
 
-    return res.status(201).json(populatedProducts);
+    return res
+      .status(201)
+      .json({ message: "Input success!", populatedProducts });
   } catch (e) {
     return res.status(500).json({
-      message: "An error occurred while creating the product",
+      message: "An error occurred while creating the product.",
       error: e,
     });
   }

@@ -98,7 +98,7 @@ async function importProductsFromCSVs(req, res) {
 
     return res
       .status(201)
-      .json({ message: "Input success!", populatedProducts });
+      .json({ message: "Import data success!", populatedProducts });
   } catch (e) {
     return res.status(500).json({
       message: "An error occurred while creating the product.",

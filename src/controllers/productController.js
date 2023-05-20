@@ -1,13 +1,34 @@
 const Product = require("../models/product");
 const Material = require("../models/material");
 
+const MIN_PRODUCT_LENGTH = 8;
+const MAX_PRODUCT_LENGTH = 10;
+const MIN_MATERIAL_LENGTH = 8;
+const MAX_MATERIAL_LENGTH = 10;
+
 async function importProductsFromCSVs(req, res) {
   try {
     const { data } = req.body;
     const savedProductIds = [];
 
-    // Check if data does exist
     for (const d of data) {
+      // Check if product number is not a string of number
+      if (!/^\d+$/.test(d.productNo)) {
+        return res.status(400).json({
+          message: `Product number (${d.productNo}) must be a number! Please check your input!`,
+        });
+      }
+
+      // Check for product the length
+      if (
+        d.productNo.length < MIN_PRODUCT_LENGTH ||
+        d.productNo.length > MAX_PRODUCT_LENGTH
+      ) {
+        return res.status(400).json({
+          message: `Product number (${d.productNo}) length should be between 10 and 12. Please check your input!`,
+        });
+      }
+
       // Check if product does exist return response status 400
       const existingProduct = await Product.findOne({ no: d.productNo });
       if (existingProduct) {
@@ -19,13 +40,30 @@ async function importProductsFromCSVs(req, res) {
       // Check for duplicate material
       if (new Set(d.materialsNo).size !== d.materialsNo.length) {
         return res.status(400).json({
-          message: `Material contains duplicate values at product number ${d.productNo}!`,
+          message: `Your input contains duplicate material number at product number ${d.productNo}!`,
         });
       }
 
-      // Check if materials does exist, if not, create new
       let materialIds = [];
       for (const materialNo of d.materialsNo) {
+        // Check if material number is not a string of number
+        if (!/^\d+$/.test(materialNo)) {
+          return res.status(400).json({
+            message: `Material number must be a number! Please check your input!`,
+          });
+        }
+
+        // Check for material the length
+        if (
+          materialNo.length < MIN_MATERIAL_LENGTH ||
+          materialNo.length > MAX_MATERIAL_LENGTH
+        ) {
+          return res.status(400).json({
+            message: `Material number length should be between 10 and 12. Please check your input!`,
+          });
+        }
+
+        // Check if materials does exist, if not, create new
         let materialDoc = await Material.findOne({ no: materialNo });
         if (!materialDoc) {
           materialDoc = new Material({ no: materialNo });
@@ -58,7 +96,9 @@ async function importProductsFromCSVs(req, res) {
       .lean()
       .exec();
 
-    return res.status(201).json(populatedProducts);
+    return res
+      .status(201)
+      .json({ message: "Input success!", populatedProducts });
   } catch (e) {
     return res.status(500).json({
       message: "An error occurred while creating the product.",
@@ -67,32 +107,26 @@ async function importProductsFromCSVs(req, res) {
   }
 }
 
-async function getAllProducts(req, res) {
-  try {
-    const limit = parseInt(req.query.limit) || 0;
-    const offset = parseInt(req.query.offset) || 0;
-
-    const products = await Product.find({})
-      .skip(offset)
-      .limit(limit)
-      .populate({
-        path: "materials",
-        select: "-__v -products",
-      })
-      .exec();
-
-    return res.status(200).json(products);
-  } catch (e) {
-    return res.status(500).json({
-      message: "An error occurred while retrieving all products.",
-      e,
-    });
-  }
-}
-
 async function createProduct(req, res) {
   try {
     const { productNo, materialsNo } = req.body;
+
+    // Check if product number is not a string of number
+    if (!/^\d+$/.test(productNo)) {
+      return res.status(400).json({
+        message: `Product number must be a number! Please check your input!`,
+      });
+    }
+
+    // Check for product the length
+    if (
+      productNo.length < MIN_PRODUCT_LENGTH ||
+      productNo.length > MAX_PRODUCT_LENGTH
+    ) {
+      return res.status(400).json({
+        message: `Product number length should be between 10 and 12. Please check your input!`,
+      });
+    }
 
     // Check if product does exist return response status 400
     const existingProduct = await Product.findOne({ no: productNo });
@@ -105,13 +139,31 @@ async function createProduct(req, res) {
     // Check for duplicate material
     if (new Set(materialsNo).size !== materialsNo.length) {
       return res.status(400).json({
-        message: "Material contains duplicate values",
+        message:
+          "Your input contains duplicate material number. Please check again!",
       });
     }
 
     // Check if materials does exist, if not, create new
     let materialIds = [];
     for (const materialNo of materialsNo) {
+      // Check if material number is not a string of number
+      if (!/^\d+$/.test(materialNo)) {
+        return res.status(400).json({
+          message: `Material number must be a number! Please check your input!`,
+        });
+      }
+
+      // Check for material the length
+      if (
+        materialNo.length < MIN_MATERIAL_LENGTH ||
+        materialNo.length > MAX_MATERIAL_LENGTH
+      ) {
+        return res.status(400).json({
+          message: `Material number length should be between 10 and 12. Please check your input!`,
+        });
+      }
+
       let materialDoc = await Material.findOne({ no: materialNo });
       if (!materialDoc) {
         materialDoc = new Material({ no: materialNo });
@@ -148,6 +200,29 @@ async function createProduct(req, res) {
     return res.status(500).json({
       message: "An error occurred while creating the product.",
       error: e,
+    });
+  }
+}
+
+async function getAllProducts(req, res) {
+  try {
+    const limit = parseInt(req.query.limit) || 0;
+    const offset = parseInt(req.query.offset) || 0;
+
+    const products = await Product.find({})
+      .skip(offset)
+      .limit(limit)
+      .populate({
+        path: "materials",
+        select: "-__v -products",
+      })
+      .exec();
+
+    return res.status(200).json(products);
+  } catch (e) {
+    return res.status(500).json({
+      message: "An error occurred while retrieving all products.",
+      e,
     });
   }
 }

@@ -1,9 +1,9 @@
 const Product = require("../models/product");
 const Material = require("../models/material");
 
-const MIN_PRODUCT_LENGTH = 8;
+const MIN_PRODUCT_LENGTH = 4;
 const MAX_PRODUCT_LENGTH = 10;
-const MIN_MATERIAL_LENGTH = 8;
+const MIN_MATERIAL_LENGTH = 4;
 const MAX_MATERIAL_LENGTH = 10;
 
 async function importProductsFromCSVs(req, res) {

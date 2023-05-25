@@ -227,4 +227,38 @@ async function getAllProducts(req, res) {
   }
 }
 
-module.exports = { importProductsFromCSVs, getAllProducts, createProduct };
+async function deleteProduct(req, res) {
+  try {
+    const { id } = req.params;
+
+    // Find the product
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(400).json({
+        message: `A product with ID ${id} does not exist!`,
+      });
+    }
+
+    // Go through each material ID in the product
+    for (let materialId of product.materials) {
+      const material = await Material.findById(materialId);
+
+      // If a material exists and the product is the only one referencing it, delete the material
+      if (material && material.products.length === 1 && material.products[0].equals(product._id)) {
+        await Material.findByIdAndDelete(material._id);
+      }
+    }
+
+    // Finally, delete the product
+    await Product.findByIdAndDelete(id);
+
+    return res.status(200).json({ message: "Product and orphaned materials deleted successfully!" });
+  } catch (e) {
+    return res.status(500).json({
+      message: "An error occurred while deleting the product.",
+      error: e,
+    });
+  }
+}
+
+module.exports = { importProductsFromCSVs, getAllProducts, createProduct, deleteProduct };

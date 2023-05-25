@@ -9,7 +9,8 @@ const {
   importProductsFromCSVs,
   getAllProducts,
   createProduct,
-  deleteProduct
+  deleteProduct,
+  getProduct,
 } = require("./controllers/productController");
 
 const port = process.env.PORT || 3001;
@@ -18,7 +19,7 @@ const dbUrl = process.env.DB_URL || "mongodb://127.0.0.1:27017/mytest";
 router.post("/products-csv", importProductsFromCSVs);
 router.post("/product", createProduct);
 router.get("/products", getAllProducts);
-// router.get("/product/:id", getProduct);
+router.get("/product/:no", getProduct);
 router.delete("/product/:id", deleteProduct);
 // router.delete('/product/:productId/material/:materialId', deleteMaterialFromProduct);
 

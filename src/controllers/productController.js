@@ -227,6 +227,30 @@ async function getAllProducts(req, res) {
   }
 }
 
+async function getProduct(req, res) {
+  try {
+    const { no } = req.params;
+
+    const product = await Product.findOne({ no: no })
+      .populate({
+        path: "materials",
+        select: "-__v -products",
+      })
+      .exec();
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found." });
+    }
+
+    return res.status(200).json(product);
+  } catch (e) {
+    return res.status(500).json({
+      message: "An error occurred while retrieving the product.",
+      e,
+    });
+  }
+}
+
 async function deleteProduct(req, res) {
   try {
     const { id } = req.params;
@@ -244,7 +268,11 @@ async function deleteProduct(req, res) {
       const material = await Material.findById(materialId);
 
       // If a material exists and the product is the only one referencing it, delete the material
-      if (material && material.products.length === 1 && material.products[0].equals(product._id)) {
+      if (
+        material &&
+        material.products.length === 1 &&
+        material.products[0].equals(product._id)
+      ) {
         await Material.findByIdAndDelete(material._id);
       }
     }
@@ -252,7 +280,11 @@ async function deleteProduct(req, res) {
     // Finally, delete the product
     await Product.findByIdAndDelete(id);
 
-    return res.status(200).json({ message: "Product and orphaned materials deleted successfully!" });
+    return res
+      .status(200)
+      .json({
+        message: "Product and orphaned materials deleted successfully!",
+      });
   } catch (e) {
     return res.status(500).json({
       message: "An error occurred while deleting the product.",
@@ -281,23 +313,40 @@ async function deleteMaterialFromProduct(req, res) {
     }
 
     // Remove the material from the product
-    product.materials = product.materials.filter(id => !id.equals(materialId));
+    product.materials = product.materials.filter(
+      (id) => !id.equals(materialId)
+    );
     await product.save();
 
     // Check if the material is referenced by any other products, if not delete the material
     const material = await Material.findById(materialId);
-    if (material && material.products.length === 1 && material.products[0].equals(productId)) {
+    if (
+      material &&
+      material.products.length === 1 &&
+      material.products[0].equals(productId)
+    ) {
       await Material.findByIdAndDelete(materialId);
     }
 
-    return res.status(200).json({ message: "Material deleted from product and orphaned material deleted successfully!" });
+    return res
+      .status(200)
+      .json({
+        message:
+          "Material deleted from product and orphaned material deleted successfully!",
+      });
   } catch (e) {
     return res.status(500).json({
-      message: "An error occurred while deleting the material from the product.",
+      message:
+        "An error occurred while deleting the material from the product.",
       error: e,
     });
   }
 }
 
-
-module.exports = { importProductsFromCSVs, getAllProducts, createProduct, deleteProduct };
+module.exports = {
+  importProductsFromCSVs,
+  getAllProducts,
+  getProduct,
+  createProduct,
+  deleteProduct,
+};

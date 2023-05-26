@@ -212,10 +212,11 @@ async function getAllProducts(req, res) {
     const products = await Product.find({})
       .skip(offset)
       .limit(limit)
-      .populate({
-        path: "materials",
-        select: "-__v -products",
-      })
+      // .populate({
+      //   path: "materials",
+      //   select: "-__v -products",
+      // })
+      .select("-materials -__v")
       .exec();
 
     return res.status(200).json(products);
@@ -280,11 +281,9 @@ async function deleteProduct(req, res) {
     // Finally, delete the product
     await Product.findByIdAndDelete(id);
 
-    return res
-      .status(200)
-      .json({
-        message: "Product and orphaned materials deleted successfully!",
-      });
+    return res.status(200).json({
+      message: "Product and orphaned materials deleted successfully!",
+    });
   } catch (e) {
     return res.status(500).json({
       message: "An error occurred while deleting the product.",
@@ -328,12 +327,10 @@ async function deleteMaterialFromProduct(req, res) {
       await Material.findByIdAndDelete(materialId);
     }
 
-    return res
-      .status(200)
-      .json({
-        message:
-          "Material deleted from product and orphaned material deleted successfully!",
-      });
+    return res.status(200).json({
+      message:
+        "Material deleted from product and orphaned material deleted successfully!",
+    });
   } catch (e) {
     return res.status(500).json({
       message:

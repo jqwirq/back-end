@@ -7,10 +7,11 @@ const server = express();
 const mongoose = require("mongoose");
 const {
   importProductsFromCSVs,
-  getAllProducts,
   createProduct,
-  deleteProduct,
+  getAllProducts,
   getProduct,
+  updateProduct,
+  deleteProduct,
 } = require("./controllers/productController");
 
 const port = process.env.PORT || 3001;

@@ -252,6 +252,84 @@ async function getProduct(req, res) {
   }
 }
 
+async function updateProduct(req, res) {
+  try {
+    const { id, materialsNo } = req.body;
+
+    // Find existing product, if not exist return response status 400
+    let existingProduct = await Product.findById(id);
+    if (!existingProduct) {
+      return res.status(400).json({
+        message: `A product with ID ${id} does not exist!`,
+      });
+    }
+
+    // Check for duplicate material
+    if (new Set(materialsNo).size !== materialsNo.length) {
+      return res.status(400).json({
+        message:
+          "Your input contains duplicate material number. Please check again!",
+      });
+    }
+
+    // Check if materials exist, if not, create new
+    let materialIds = [];
+    for (const materialNo of materialsNo) {
+      // Check if material number is not a string of number
+      if (!/^\d+$/.test(materialNo)) {
+        return res.status(400).json({
+          message: `Material number must be a number! Please check your input!`,
+        });
+      }
+
+      // Check for material length
+      if (
+        materialNo.length < MIN_MATERIAL_LENGTH ||
+        materialNo.length > MAX_MATERIAL_LENGTH
+      ) {
+        return res.status(400).json({
+          message: `Material number length should be between 10 and 12. Please check your input!`,
+        });
+      }
+
+      let materialDoc = await Material.findOne({ no: materialNo });
+      if (!materialDoc) {
+        materialDoc = new Material({ no: materialNo });
+        await materialDoc.save();
+      }
+      materialIds.push(materialDoc._id);
+    }
+
+    // Updating product
+    existingProduct.materials = materialIds;
+    await existingProduct.save();
+
+    await Material.updateMany(
+      { _id: { $in: materialIds } },
+      { $push: { products: existingProduct._id } }
+    );
+
+    const populatedProducts = await Product.find({
+      _id: existingProduct._id,
+    })
+      .populate({
+        path: "materials",
+        select: "-__v -products",
+      })
+      .lean()
+      .exec();
+
+    return res
+      .status(200)
+      .json({ message: "Update success!", populatedProducts });
+  } catch (e) {
+    return res.status(500).json({
+      message: "An error occurred while updating the product.",
+      error: e,
+    });
+  }
+}
+
 async function deleteProduct(req, res) {
   try {
     const { id } = req.params;
@@ -342,8 +420,9 @@ async function deleteMaterialFromProduct(req, res) {
 
 module.exports = {
   importProductsFromCSVs,
+  createProduct,
   getAllProducts,
   getProduct,
-  createProduct,
+  updateProduct,
   deleteProduct,
 };

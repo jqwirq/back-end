@@ -21,6 +21,7 @@ router.post("/products-csv", importProductsFromCSVs);
 router.post("/product", createProduct);
 router.get("/products", getAllProducts);
 router.get("/product/:no", getProduct);
+router.put("/product/:id", updateProduct);
 router.delete("/product/:id", deleteProduct);
 // router.delete('/product/:productId/material/:materialId', deleteMaterialFromProduct);
 

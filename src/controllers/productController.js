@@ -208,8 +208,14 @@ async function getAllProducts(req, res) {
   try {
     const limit = parseInt(req.query.limit) || 0;
     const offset = parseInt(req.query.offset) || 0;
+    const no = req.query.no || "";
 
-    const products = await Product.find({})
+    let query = {};
+    if (no) {
+      query.no = no;
+    }
+
+    const products = await Product.find(query)
       .skip(offset)
       .limit(limit)
       // .populate({
@@ -252,66 +258,148 @@ async function getProduct(req, res) {
   }
 }
 
+function isNotDigits(s) {
+  return !/^\d+$/.test(s);
+}
+
+function isProductNoOutOfLength(s) {
+  return s.length < MIN_PRODUCT_LENGTH || s.length > MAX_PRODUCT_LENGTH;
+}
+
+function isMaterialNoOutOfLength(s) {
+  return s.length < MIN_MATERIAL_LENGTH || s.length > MAX_MATERIAL_LENGTH;
+}
+
+function isMaterialDuplicate(a) {
+  return new Set(a).size !== a.length;
+}
+
 async function updateProduct(req, res) {
   try {
-    const { id, materialsNo } = req.body;
+    const { id: productId } = req.params;
+    const { productNo: newProductNo, materialsNo: newMaterialsNo } = req.body;
 
-    // Find existing product, if not exist return response status 400
-    let existingProduct = await Product.findById(id);
-    if (!existingProduct) {
+    // Check if new product is empty
+    if (newProductNo === "") {
       return res.status(400).json({
-        message: `A product with ID ${id} does not exist!`,
+        message: `Product number is empty! Please check your input!`,
       });
     }
 
-    // Check for duplicate material
-    if (new Set(materialsNo).size !== materialsNo.length) {
+    // Check if new product number is a string of number
+    if (isNotDigits(newProductNo)) {
+      return res.status(400).json({
+        message: `Product number must be a number! Please check your input!`,
+      });
+    }
+
+    // Check for new product number length
+    if (isProductNoOutOfLength(newProductNo)) {
+      return res.status(400).json({
+        message: `Product number length should be between 10 and 12. Please check your input!`,
+      });
+    }
+
+    // Check if new product number already exists
+    const existingProduct = await Product.findOne({ no: newProductNo });
+    if (existingProduct && existingProduct._id.toString() !== productId) {
+      return res.status(400).json({
+        message: `A product with number ${newProductNo} already exists!`,
+      });
+    }
+
+    // Check if materials no is empty
+    if (newMaterialsNo.length === 0) {
       return res.status(400).json({
         message:
-          "Your input contains duplicate material number. Please check again!",
+          "Your input doesn't contains material numbers. Please check again!",
       });
     }
 
-    // Check if materials exist, if not, create new
-    let materialIds = [];
-    for (const materialNo of materialsNo) {
-      // Check if material number is not a string of number
-      if (!/^\d+$/.test(materialNo)) {
-        return res.status(400).json({
-          message: `Material number must be a number! Please check your input!`,
-        });
-      }
-
-      // Check for material length
-      if (
-        materialNo.length < MIN_MATERIAL_LENGTH ||
-        materialNo.length > MAX_MATERIAL_LENGTH
-      ) {
-        return res.status(400).json({
-          message: `Material number length should be between 10 and 12. Please check your input!`,
-        });
-      }
-
-      let materialDoc = await Material.findOne({ no: materialNo });
-      if (!materialDoc) {
-        materialDoc = new Material({ no: materialNo });
-        await materialDoc.save();
-      }
-      materialIds.push(materialDoc._id);
+    // Check for duplicate new material number
+    if (isMaterialDuplicate(newMaterialsNo)) {
+      return res.status(400).json({
+        message:
+          "Your input contains duplicate material numbers. Please check again!",
+      });
     }
 
-    // Updating product
-    existingProduct.materials = materialIds;
-    await existingProduct.save();
+    // Process new materials if exist
+    let newMaterialIds = [];
+    if (newMaterialsNo) {
+      for (const materialNo of newMaterialsNo) {
+        // Check if new material number is a string of number
+        if (isNotDigits(materialNo)) {
+          return res.status(400).json({
+            message: `Material number must be a number! Please check your input!`,
+          });
+        }
 
+        // Check for new material number length
+        if (isMaterialNoOutOfLength(materialNo)) {
+          return res.status(400).json({
+            message: `Material number length should be between 10 and 12. Please check your input!`,
+          });
+        }
+
+        let materialDoc = await Material.findOne({ no: materialNo });
+        if (!materialDoc) {
+          materialDoc = new Material({ no: materialNo });
+          await materialDoc.save();
+        }
+        newMaterialIds.push(materialDoc._id);
+      }
+    }
+    console.log(newMaterialIds);
+
+    const productToUpdate = await Product.findById(productId);
+    if (!productToUpdate) {
+      return res.status(404).json({
+        message: `Product with id ${productId} does not exist.`,
+      });
+    }
+
+    const oldMaterialIds = productToUpdate.materials;
+
+    // Check if the new product number is the same as the current one
+    if (productToUpdate.no !== newProductNo) {
+      productToUpdate.no = newProductNo;
+    }
+
+    // Process new materials if exist
+    productToUpdate.materials = newMaterialIds;
+
+    console.log("product to update:", productToUpdate);
+    await productToUpdate.save();
+
+    // Remove product from old materials
     await Material.updateMany(
-      { _id: { $in: materialIds } },
-      { $push: { products: existingProduct._id } }
+      { _id: { $in: oldMaterialIds } },
+      { $pull: { products: productId } }
     );
 
-    const populatedProducts = await Product.find({
-      _id: existingProduct._id,
-    })
+    // Add product to new materials
+    await Material.updateMany(
+      { _id: { $in: newMaterialIds } },
+      { $addToSet: { products: productId } }
+    );
+
+    // Delete orphaned materials
+    const orphanedMaterials = await Material.find({
+      _id: { $in: oldMaterialIds },
+      products: { $size: 0 },
+    });
+    await Material.deleteMany({
+      _id: { $in: orphanedMaterials.map((orphan) => orphan._id) },
+    });
+
+    // Add product to new materials
+    await Material.updateMany(
+      { _id: { $in: newMaterialIds } },
+      { $push: { products: productId } }
+    );
+
+    const populatedProduct = await Product.findById(productId)
       .populate({
         path: "materials",
         select: "-__v -products",
@@ -321,8 +409,9 @@ async function updateProduct(req, res) {
 
     return res
       .status(200)
-      .json({ message: "Update success!", populatedProducts });
+      .json({ message: "Update success!", populatedProduct });
   } catch (e) {
+    console.log(e);
     return res.status(500).json({
       message: "An error occurred while updating the product.",
       error: e,

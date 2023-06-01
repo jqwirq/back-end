@@ -17,36 +17,36 @@ const SAPSchema = new Schema(
           type: Schema.Types.ObjectId,
           ref: "Product",
         },
-        materials: [
-          {
-            _id: {
-              type: Schema.Types.ObjectId,
-              ref: "Material",
-            },
-            package: {
-              type: String,
-              required: true,
-            },
-            quantity: {
-              type: Number,
-              required: true,
-            },
-            startTime: {
-              type: Number,
-              default: null,
-            },
-            endTime: {
-              type: Number,
-              default: null,
-            },
-            duration: {
-              type: Number,
-              default: null,
-            },
-          },
-        ],
       },
     },
+    materials: [
+      {
+        _id: {
+          type: Schema.Types.ObjectId,
+          ref: "Material",
+        },
+        package: {
+          type: String,
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+        },
+        startTime: {
+          type: Number,
+          default: null,
+        },
+        endTime: {
+          type: Number,
+          default: null,
+        },
+        duration: {
+          type: Number,
+          default: null,
+        },
+      },
+    ],
     startTime: {
       type: Number,
       default: null,

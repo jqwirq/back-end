@@ -11,19 +11,25 @@ const SAPSchema = new Schema(
       type: String,
       required: true,
     },
-    product: {
-      type: {
-        _id: {
-          type: Schema.Types.ObjectId,
-          ref: "Product",
-        },
-      },
+    productNo: {
+      // type: {
+      //   _id: {
+      //     type: Schema.Types.ObjectId,
+      //     ref: "Product",
+      //   },
+      // },
+      type: String,
+      required: true,
     },
     materials: [
       {
-        _id: {
-          type: Schema.Types.ObjectId,
-          ref: "Material",
+        // _id: {
+        //   type: Schema.Types.ObjectId,
+        //   ref: "Material",
+        // },
+        no: {
+          type: String,
+          required: true,
         },
         package: {
           type: String,

@@ -350,7 +350,6 @@ async function updateProduct(req, res) {
         newMaterialIds.push(materialDoc._id);
       }
     }
-    console.log(newMaterialIds);
 
     const productToUpdate = await Product.findById(productId);
     if (!productToUpdate) {
@@ -369,7 +368,6 @@ async function updateProduct(req, res) {
     // Process new materials if exist
     productToUpdate.materials = newMaterialIds;
 
-    console.log("product to update:", productToUpdate);
     await productToUpdate.save();
 
     // Remove product from old materials
@@ -411,7 +409,6 @@ async function updateProduct(req, res) {
       .status(200)
       .json({ message: "Update success!", populatedProduct });
   } catch (e) {
-    console.log(e);
     return res.status(500).json({
       message: "An error occurred while updating the product.",
       error: e,

@@ -1,33 +1,73 @@
-const net = require("net");
+const SAP = require("../models/sap");
 
-async function startTCPServer(req, res) {
-  const port = req.params.port;
+async function startWeighingProcess(req, res) {
+  // Extract relevant fields from request body
+  const { no, batchNo, productNo } = req.body;
 
-  if (tcpServers[port]) {
-    return res.status(400).send(`TCP Server already running on port ${port}`);
+  // Validate input
+  if (!no || !batchNo || !productNo) {
+    return res.status(400).json({ message: "Required field is missing" });
   }
 
-  const server = net.createServer((socket) => {
-    socket.on("data", (data) => {
-      console.log("Received data from client: ", data.toString());
-      socket.write(`Server response: ${data}`);
-    });
-
-    socket.on("end", () => {
-      console.log("Closing connection with the client");
-    });
-
-    socket.on("error", (err) => {
-      console.log(`Error: ${err}`);
-    });
+  // Create a new SAP document
+  const newSAP = new SAP({
+    no,
+    batchNo,
+    productNo,
+    startTime: Date.now(),
+    materials: [], // Starts as an empty array
   });
 
-  server.listen(port, () => {
-    console.log(`TCP Server started on port ${port}`);
-  });
+  try {
+    // Save the document
+    const savedSAP = await newSAP.save();
 
-  tcpServers[port] = server;
-
-  res.send(`TCP Server started on port ${port}`);
+    // Return the newly created document
+    res.status(201).json({ message: "Successfully created.", SAP: savedSAP });
+  } catch (error) {
+    // Handle any errors during the save operation
+    res.status(500).json({ message: "Error creating SAP document" });
+  }
 }
-module.exports = { startTCPServer };
+
+async function stopWeighingProcess(req, res) {
+  // Extract the id from the request body
+  const { id } = req.body;
+
+  // Validate input
+  if (!id) {
+    return res.status(400).json({ message: "Required field is missing" });
+  }
+
+  try {
+    // Find the SAP document by id
+    const sapDocument = await SAP.findById(id);
+
+    // Check if the SAP document was found
+    if (!sapDocument) {
+      return res
+        .status(404)
+        .json({ message: "No SAP document found with the provided id" });
+    }
+
+    // Calculate the duration
+    const endTime = Date.now();
+    const duration = endTime - sapDocument.startTime; // In milliseconds
+
+    // Update the SAP document
+    sapDocument.endTime = endTime;
+    sapDocument.duration = duration;
+    sapDocument.isCompleted = true;
+
+    // Save the updated SAP document
+    const updatedSAP = await sapDocument.save();
+
+    // Return the updated document
+    res.status(200).json(updatedSAP);
+  } catch (error) {
+    // Handle any errors during the update operation
+    res.status(500).json({ message: "Error stopping SAP document" });
+  }
+}
+
+module.exports = { startWeighingProcess, stopWeighingProcess };

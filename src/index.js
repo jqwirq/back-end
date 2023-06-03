@@ -13,15 +13,18 @@ const {
   updateProduct,
   deleteProduct,
 } = require("./controllers/productController");
-
-// const dgram = require("dgram");
-// const udpConnection = dgram.createSocket("udp4");
+const {
+  startWeighingProcess,
+  stopWeighingProcess,
+} = require("./controllers/weighingController");
+const {
+  startTCPServer,
+  stopTCPServer,
+} = require("./controllers/tcpConnection");
+// const { tcpServer } = require("./testTcp");
 
 const port = process.env.PORT || 3001;
 const dbUrl = process.env.DB_URL || "mongodb://127.0.0.1:27017/mytest";
-
-let udpMessage = "0";
-let sseId = null;
 
 router.post("/products-csv", importProductsFromCSVs);
 router.post("/product", createProduct);
@@ -31,28 +34,11 @@ router.put("/product/:id", updateProduct);
 router.delete("/product/:id", deleteProduct);
 // router.delete('/product/:productId/material/:materialId', deleteMaterialFromProduct);
 
-// router.get("/events", (req, res) => {
-//   // Set response headers
-//   res.setHeader("Content-Type", "text/event-stream");
-//   res.setHeader("Cache-Control", "no-cache");
-//   res.setHeader("Connection", "keep-alive");
+router.post("/weighing-process/start", startWeighingProcess);
+router.post("/weighing-process/stop", stopWeighingProcess);
 
-//   const msg = `${udpMessage}\n\n`;
-//   res.write(msg);
-
-//   // Send an event every second
-//   sseId = setInterval(() => {
-//     const message = `data: ${udpMessage}\n\n`;
-//     if (!res.write(message)) {
-//       clearInterval(sseId);
-//     }
-//   }, 1000);
-
-//   // Close event if client disconnects
-//   req.on("close", () => {
-//     clearInterval(sseId);
-//   });
-// });
+// router.get("/weighing/start-tcp/:port", startTCPServer);
+// router.post("/weighing/stop-tcp", stopTCPServer);
 
 main();
 
@@ -67,14 +53,8 @@ async function main() {
   server.use(cors());
 
   server.use("/api", router);
+  // tcpServer();
 
-  // udpConnection.on("message", (msg, rinfo) => {
-  //   console.log(
-  //     `UDP server received ${msg} from ${rinfo.address}:${rinfo.port}`
-  //   );
-  //   udpMessage = msg.toString(); // Save latest message
-  // });
-  // udpConnection.bind(3003);
   server.listen(port, listenCallback);
 }
 

@@ -72,9 +72,10 @@ const SAPSchema = new Schema(
   },
   {
     timestamps: true,
+    collection: "SAP",
   }
 );
 
-const SAP = mongoose.model("product", SAPSchema);
+const SAP = mongoose.model("SAP", SAPSchema);
 
 module.exports = SAP;

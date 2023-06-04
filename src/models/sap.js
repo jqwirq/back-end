@@ -23,15 +23,15 @@ const SAPSchema = new Schema(
     },
     materials: [
       {
-        // _id: {
-        //   type: Schema.Types.ObjectId,
-        //   ref: "Material",
-        // },
+        _id: {
+          type: Schema.Types.ObjectId,
+          auto: true,
+        },
         no: {
           type: String,
           required: true,
         },
-        package: {
+        packaging: {
           type: String,
           required: true,
         },
@@ -50,6 +50,10 @@ const SAPSchema = new Schema(
         duration: {
           type: Number,
           default: null,
+        },
+        isCompleted: {
+          type: Boolean,
+          default: false,
         },
       },
     ],

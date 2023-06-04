@@ -15,7 +15,7 @@ async function importProductsFromCSVs(req, res) {
       // Check if product number is not a string of number
       if (!/^\d+$/.test(d.productNo)) {
         return res.status(400).json({
-          message: `Product number (${d.productNo}) must be a number! Please check your input!`,
+          message: `Product number (${d.productNo}) must be a number! Please check your input`,
         });
       }
 
@@ -25,7 +25,7 @@ async function importProductsFromCSVs(req, res) {
         d.productNo.length > MAX_PRODUCT_LENGTH
       ) {
         return res.status(400).json({
-          message: `Product number (${d.productNo}) length should be between 10 and 12. Please check your input!`,
+          message: `Product number (${d.productNo}) length should be between 10 and 12. Please check your input`,
         });
       }
 
@@ -33,14 +33,14 @@ async function importProductsFromCSVs(req, res) {
       const existingProduct = await Product.findOne({ no: d.productNo });
       if (existingProduct) {
         return res.status(400).json({
-          message: `A product with number ${d.productNo} already exists!`,
+          message: `A product with number ${d.productNo} already exists`,
         });
       }
 
       // Check for duplicate material
       if (new Set(d.materialsNo).size !== d.materialsNo.length) {
         return res.status(400).json({
-          message: `Your input contains duplicate material number at product number ${d.productNo}!`,
+          message: `Your input contains duplicate material number at product number ${d.productNo}`,
         });
       }
 
@@ -49,7 +49,7 @@ async function importProductsFromCSVs(req, res) {
         // Check if material number is not a string of number
         if (!/^\d+$/.test(materialNo)) {
           return res.status(400).json({
-            message: `Material number must be a number! Please check your input!`,
+            message: `Material number must be a number! Please check your input`,
           });
         }
 
@@ -59,7 +59,7 @@ async function importProductsFromCSVs(req, res) {
           materialNo.length > MAX_MATERIAL_LENGTH
         ) {
           return res.status(400).json({
-            message: `Material number length should be between 10 and 12. Please check your input!`,
+            message: `Material number length should be between 10 and 12. Please check your input`,
           });
         }
 
@@ -98,10 +98,10 @@ async function importProductsFromCSVs(req, res) {
 
     return res
       .status(201)
-      .json({ message: "Import data success!", populatedProducts });
+      .json({ message: "Import data success", populatedProducts });
   } catch (e) {
     return res.status(500).json({
-      message: "An error occurred while creating the product.",
+      message: "An error occurred while creating the product",
       error: e,
     });
   }
@@ -114,7 +114,7 @@ async function createProduct(req, res) {
     // Check if product number is not a string of number
     if (!/^\d+$/.test(productNo)) {
       return res.status(400).json({
-        message: `Product number must be a number! Please check your input!`,
+        message: `Product number must be a number! Please check your input`,
       });
     }
 
@@ -132,7 +132,7 @@ async function createProduct(req, res) {
     const existingProduct = await Product.findOne({ no: productNo });
     if (existingProduct) {
       return res.status(400).json({
-        message: `A product with number ${productNo} already exists!`,
+        message: `A product with number ${productNo} already exists`,
       });
     }
 
@@ -140,7 +140,7 @@ async function createProduct(req, res) {
     if (new Set(materialsNo).size !== materialsNo.length) {
       return res.status(400).json({
         message:
-          "Your input contains duplicate material number. Please check again!",
+          "Your input contains duplicate material number. Please check again",
       });
     }
 
@@ -150,7 +150,7 @@ async function createProduct(req, res) {
       // Check if material number is not a string of number
       if (!/^\d+$/.test(materialNo)) {
         return res.status(400).json({
-          message: `Material number must be a number! Please check your input!`,
+          message: `Material number must be a number! Please check your input`,
         });
       }
 

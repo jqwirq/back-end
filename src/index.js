@@ -16,6 +16,8 @@ const {
 const {
   startWeighingProcess,
   stopWeighingProcess,
+  startMaterialWeighing,
+  stopMaterialWeighing,
 } = require("./controllers/weighingController");
 const {
   startTCPServer,
@@ -36,6 +38,8 @@ router.delete("/product/:id", deleteProduct);
 
 router.post("/weighing-process/start", startWeighingProcess);
 router.post("/weighing-process/stop", stopWeighingProcess);
+router.post("/material-weighing/start", startMaterialWeighing);
+router.post("/material-weighing/stop", stopMaterialWeighing);
 
 // router.get("/weighing/start-tcp/:port", startTCPServer);
 // router.post("/weighing/stop-tcp", stopTCPServer);
@@ -46,7 +50,7 @@ async function main() {
   try {
     await mongoose.connect(process.env.DB_URL || dbUrl);
   } catch (err) {
-    console.error(err.message); // This is bad
+    // console.error(err.message); // This is bad
   }
 
   server.use(express.json());

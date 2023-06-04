@@ -1,4 +1,5 @@
 const SAP = require("../models/sap");
+const Product = require("../models/product");
 
 async function startWeighingProcess(req, res) {
   // Extract relevant fields from request body
@@ -7,6 +8,13 @@ async function startWeighingProcess(req, res) {
   // Validate input
   if (!no || !batchNo || !productNo) {
     return res.status(400).json({ message: "Required field is missing" });
+  }
+
+  const existingProduct = await Product.findOne({ no: productNo });
+  if (!existingProduct) {
+    return res.status(404).json({
+      message: `Product with number ${productNo} doesn't exists`,
+    });
   }
 
   // Create a new SAP document
@@ -50,6 +58,15 @@ async function stopWeighingProcess(req, res) {
         .json({ message: "No SAP document found with the provided id" });
     }
 
+    if (sapDocument.materials.length === 0) {
+      await SAP.deleteOne({ _id: id });
+      return res.status(200).json({ message: "Idiot" });
+    }
+
+    if (sapDocument.materials.some((m) => m.isCompleted === false)) {
+      return res.status(409).json({ message: "Process not finished yet" });
+    }
+
     // Calculate the duration
     const endTime = Date.now();
     const duration = endTime - sapDocument.startTime; // In milliseconds
@@ -71,40 +88,44 @@ async function stopWeighingProcess(req, res) {
 }
 
 async function startMaterialWeighing(req, res) {
-  // Extract relevant fields from request body
-  const { no, materialNo, package, quantity } = req.body;
-
-  // Validate input
-  if (!no || !materialNo || !package || !quantity) {
-    return res.status(400).json({ message: "Required field is missing" });
-  }
-
-  // Find the SAP document with the provided `no`
-  const sap = await SAP.findOne({ no: no });
-
-  if (!sap) {
-    return res.status(404).json({ message: "SAP document not found" });
-  }
-
-  // Create a new material object
-  const newMaterial = {
-    no: materialNo,
-    package: package,
-    quantity: quantity,
-    startTime: Date.now(), // Set the start time as current time
-  };
-
-  // Add the material to the `materials` array of the SAP document
-  sap.materials.push(newMaterial);
-
   try {
+    // Extract relevant fields from request body
+    const { id, materialNo, packaging, quantity } = req.body;
+
+    // Validate input
+    if (!id || !materialNo || !packaging || !quantity) {
+      return res.status(400).json({ message: "Required field is missing" });
+    }
+
+    // Find the SAP document with the provided `id`
+    const sap = await SAP.findById(id);
+
+    if (!sap) {
+      return res.status(404).json({ message: "SAP document not found" });
+    }
+
+    // Create a new material object
+    const newMaterial = {
+      no: materialNo,
+      packaging,
+      quantity,
+      startTime: Date.now(), // Set the start time as current time
+    };
+
+    // Add the material to the `materials` array of the SAP document
+    sap.materials.push(newMaterial);
+
     // Save the updated SAP document
     const savedSAP = await sap.save();
 
     // Return the updated SAP document
-    res
-      .status(200)
-      .json({ message: "Successfully added material.", SAP: savedSAP });
+    // Also return the _id of the newly added material
+    const material = savedSAP.materials[savedSAP.materials.length - 1];
+    res.status(200).json({
+      message: "Successfully added material.",
+      SAP: savedSAP,
+      material,
+    });
   } catch (error) {
     // Handle any errors during the save operation
     res.status(500).json({ message: "Error updating SAP document" });
@@ -112,52 +133,49 @@ async function startMaterialWeighing(req, res) {
 }
 
 async function stopMaterialWeighing(req, res) {
-  // Extract relevant fields from request body
-  const { id, materialNo } = req.body;
-
-  // Validate input
-  if (!id || !materialNo) {
-    return res.status(400).json({ message: "Required field is missing" });
-  }
-
-  // Find the SAP document by id
-  const sapDocument = await SAP.findById(id);
-
-  // Check if the SAP document was found
-  if (!sapDocument) {
-    return res
-      .status(404)
-      .json({ message: "No SAP document found with the provided id" });
-  }
-
-  // Find the material in the `materials` array by `materialNo`
-  const material = sapDocument.materials.find((m) => m.no === materialNo);
-
-  // Check if the material was found
-  if (!material) {
-    return res
-      .status(404)
-      .json({ message: "No material found with the provided material number" });
-  }
-
-  // Calculate the duration
-  const endTime = Date.now();
-  const duration = endTime - material.startTime; // In milliseconds
-
-  // Update the material
-  material.endTime = endTime;
-  material.duration = duration;
-
   try {
-    // Save the updated SAP document
-    const updatedSAP = await sapDocument.save();
+    const { id, materialId } = req.body;
 
-    // Return the updated SAP document
-    res.status(200).json(updatedSAP);
+    if (!id || !materialId) {
+      return res.status(400).json({ message: "Required field is missing" });
+    }
+
+    const sap = await SAP.findById(id);
+
+    if (!sap) {
+      return res.status(404).json({ message: "SAP document not found" });
+    }
+
+    let material = sap.materials.id(materialId);
+
+    if (!material) {
+      return res.status(404).json({ message: "Material not found" });
+    }
+    // if (!material.isCompleted) {
+    //   return res.status(404).json({ message: "Process still running" });
+    // }
+
+    const endTime = Date.now();
+    material.endTime = endTime;
+    material.duration = endTime - material.startTime;
+    material.isCompleted = true;
+
+    const savedSAP = await sap.save();
+    material = savedSAP.materials.id(materialId);
+
+    res.status(200).json({
+      message: "Successfully updated material.",
+      SAP: savedSAP,
+      material,
+    });
   } catch (error) {
-    // Handle any errors during the update operation
-    res.status(500).json({ message: "Error updating material" });
+    res.status(500).json({ message: "Error updating SAP document" });
   }
 }
 
-module.exports = { startWeighingProcess, stopWeighingProcess };
+module.exports = {
+  startWeighingProcess,
+  stopWeighingProcess,
+  startMaterialWeighing,
+  stopMaterialWeighing,
+};

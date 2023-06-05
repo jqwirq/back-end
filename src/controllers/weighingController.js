@@ -80,7 +80,7 @@ async function stopWeighingProcess(req, res) {
     const updatedSAP = await sapDocument.save();
 
     // Return the updated document
-    res.status(200).json(updatedSAP);
+    res.status(200).json({ message: "Process stopped", SAP: updatedSAP });
   } catch (error) {
     // Handle any errors during the update operation
     res.status(500).json({ message: "Error stopping SAP document" });
@@ -90,10 +90,10 @@ async function stopWeighingProcess(req, res) {
 async function startMaterialWeighing(req, res) {
   try {
     // Extract relevant fields from request body
-    const { id, materialNo, packaging, quantity } = req.body;
+    const { id, materialNo, packaging } = req.body;
 
     // Validate input
-    if (!id || !materialNo || !packaging || !quantity) {
+    if (!id || !materialNo || !packaging) {
       return res.status(400).json({ message: "Required field is missing" });
     }
 
@@ -108,7 +108,6 @@ async function startMaterialWeighing(req, res) {
     const newMaterial = {
       no: materialNo,
       packaging,
-      quantity,
       startTime: Date.now(), // Set the start time as current time
     };
 
@@ -134,7 +133,7 @@ async function startMaterialWeighing(req, res) {
 
 async function stopMaterialWeighing(req, res) {
   try {
-    const { id, materialId } = req.body;
+    const { id, materialId, quantity } = req.body;
 
     if (!id || !materialId) {
       return res.status(400).json({ message: "Required field is missing" });
@@ -158,6 +157,7 @@ async function stopMaterialWeighing(req, res) {
     const endTime = Date.now();
     material.endTime = endTime;
     material.duration = endTime - material.startTime;
+    material.quantity = quantity;
     material.isCompleted = true;
 
     const savedSAP = await sap.save();

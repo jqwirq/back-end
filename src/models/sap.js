@@ -37,7 +37,7 @@ const SAPSchema = new Schema(
         },
         quantity: {
           type: Number,
-          required: true,
+          default: null,
         },
         startTime: {
           type: Number,

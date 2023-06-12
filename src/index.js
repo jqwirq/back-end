@@ -19,6 +19,7 @@ const {
   startMaterialWeighing,
   stopMaterialWeighing,
 } = require("./controllers/weighingController");
+const { getAllSAP } = require("./controllers/sapController");
 const {
   startTCPServer,
   stopTCPServer,
@@ -41,8 +42,7 @@ router.post("/weighing-process/stop", stopWeighingProcess);
 router.post("/material-weighing/start", startMaterialWeighing);
 router.post("/material-weighing/stop", stopMaterialWeighing);
 
-// router.get("/weighing/start-tcp/:port", startTCPServer);
-// router.post("/weighing/stop-tcp", stopTCPServer);
+router.get("/sap-list", getAllSAP);
 
 main();
 

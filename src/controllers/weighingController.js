@@ -60,10 +60,10 @@ async function stopWeighingProcess(req, res) {
 
     if (sapDocument.materials.length === 0) {
       await SAP.deleteOne({ _id: id });
-      return res.status(200).json({ message: "Idiot" });
+      return res.status(200).json({ message: "No material weighed" });
     }
 
-    if (sapDocument.materials.some((m) => m.isCompleted === false)) {
+    if (sapDocument.materials.some(m => m.isCompleted === false)) {
       return res.status(409).json({ message: "Process not finished yet" });
     }
 

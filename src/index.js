@@ -19,15 +19,11 @@ const {
   startMaterialWeighing,
   stopMaterialWeighing,
 } = require("./controllers/weighingController");
-const { getAllSAP } = require("./controllers/sapController");
-const {
-  startTCPServer,
-  stopTCPServer,
-} = require("./controllers/tcpConnection");
-// const { tcpServer } = require("./testTcp");
+const { getAllSAP, getSAPbyId } = require("./controllers/sapController");
+const { getPackaging } = require("./controllers/controller");
 
 const port = process.env.PORT || 3001;
-const dbUrl = process.env.DB_URL || "mongodb://127.0.0.1:27017/mytest";
+const dbUrl = process.env.DB_URL || "mongodb://127.0.0.1:27017/weighing";
 
 router.post("/products-csv", importProductsFromCSVs);
 router.post("/product", createProduct);
@@ -43,14 +39,17 @@ router.post("/material-weighing/start", startMaterialWeighing);
 router.post("/material-weighing/stop", stopMaterialWeighing);
 
 router.get("/sap-list", getAllSAP);
+router.get("/sap/:_id", getSAPbyId);
+
+router.get("/packaging", getPackaging);
 
 main();
 
 async function main() {
   try {
-    await mongoose.connect(process.env.DB_URL || dbUrl);
+    await mongoose.connect(dbUrl);
   } catch (err) {
-    // console.error(err.message); // This is bad
+    console.error(err.message); // This is bad
   }
 
   server.use(express.json());

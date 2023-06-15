@@ -9,27 +9,24 @@ const MAX_MATERIAL_LENGTH = 10;
 async function importProductsFromCSVs(req, res) {
   try {
     const { data } = req.body;
-    const savedProductIds = [];
 
+    // Validation phase
     for (const d of data) {
-      // Check if product number is not a string of number
-      if (!/^\d+$/.test(d.productNo)) {
+      if (!d.productNo || !/^\d+$/.test(d.productNo)) {
         return res.status(400).json({
-          message: `Product number (${d.productNo}) must be a number! Please check your input`,
+          message: `Product number (${d.productNo}) must be a non-empty number string! Please check your input`,
         });
       }
 
-      // Check for product the length
       if (
         d.productNo.length < MIN_PRODUCT_LENGTH ||
         d.productNo.length > MAX_PRODUCT_LENGTH
       ) {
         return res.status(400).json({
-          message: `Product number (${d.productNo}) length should be between 10 and 12. Please check your input`,
+          message: `Product number (${d.productNo}) length should be between ${MIN_PRODUCT_LENGTH} and ${MAX_PRODUCT_LENGTH}. Please check your input`,
         });
       }
 
-      // Check if product does exist return response status 400
       const existingProduct = await Product.findOne({ no: d.productNo });
       if (existingProduct) {
         return res.status(400).json({
@@ -37,33 +34,35 @@ async function importProductsFromCSVs(req, res) {
         });
       }
 
-      // Check for duplicate material
       if (new Set(d.materialsNo).size !== d.materialsNo.length) {
         return res.status(400).json({
           message: `Your input contains duplicate material number at product number ${d.productNo}`,
         });
       }
 
-      let materialIds = [];
       for (const materialNo of d.materialsNo) {
-        // Check if material number is not a string of number
-        if (!/^\d+$/.test(materialNo)) {
+        if (!materialNo || !/^\d+$/.test(materialNo)) {
           return res.status(400).json({
-            message: `Material number must be a number! Please check your input`,
+            message: `Material number must be a non-empty number string! Please check your input`,
           });
         }
 
-        // Check for material the length
         if (
           materialNo.length < MIN_MATERIAL_LENGTH ||
           materialNo.length > MAX_MATERIAL_LENGTH
         ) {
           return res.status(400).json({
-            message: `Material number length should be between 10 and 12. Please check your input`,
+            message: `Material number length should be between ${MIN_MATERIAL_LENGTH} and ${MAX_MATERIAL_LENGTH}. Please check your input`,
           });
         }
+      }
+    }
 
-        // Check if materials does exist, if not, create new
+    // Creation phase
+    const savedProductIds = [];
+    for (const d of data) {
+      let materialIds = [];
+      for (const materialNo of d.materialsNo) {
         let materialDoc = await Material.findOne({ no: materialNo });
         if (!materialDoc) {
           materialDoc = new Material({ no: materialNo });
@@ -388,7 +387,7 @@ async function updateProduct(req, res) {
       products: { $size: 0 },
     });
     await Material.deleteMany({
-      _id: { $in: orphanedMaterials.map((orphan) => orphan._id) },
+      _id: { $in: orphanedMaterials.map(orphan => orphan._id) },
     });
 
     // Add product to new materials
@@ -432,13 +431,19 @@ async function deleteProduct(req, res) {
     for (let materialId of product.materials) {
       const material = await Material.findById(materialId);
 
-      // If a material exists and the product is the only one referencing it, delete the material
-      if (
-        material &&
-        material.products.length === 1 &&
-        material.products[0].equals(product._id)
-      ) {
-        await Material.findByIdAndDelete(material._id);
+      // If a material exists, remove the product from its list
+      if (material) {
+        material.products = material.products.filter(
+          productId => !productId.equals(product._id)
+        );
+
+        // If the material is not associated with any product, delete the material
+        if (material.products.length === 0) {
+          await Material.findByIdAndDelete(material._id);
+        } else {
+          // Else, save the changes
+          await material.save();
+        }
       }
     }
 
@@ -476,19 +481,23 @@ async function deleteMaterialFromProduct(req, res) {
     }
 
     // Remove the material from the product
-    product.materials = product.materials.filter(
-      (id) => !id.equals(materialId)
-    );
+    product.materials = product.materials.filter(id => !id.equals(materialId));
     await product.save();
 
-    // Check if the material is referenced by any other products, if not delete the material
+    // Find the material
     const material = await Material.findById(materialId);
-    if (
-      material &&
-      material.products.length === 1 &&
-      material.products[0].equals(productId)
-    ) {
-      await Material.findByIdAndDelete(materialId);
+
+    // If a material exists, remove the product from its list
+    if (material) {
+      material.products = material.products.filter(id => !id.equals(productId));
+
+      // If the material is not associated with any product, delete the material
+      if (material.products.length === 0) {
+        await Material.findByIdAndDelete(materialId);
+      } else {
+        // Else, save the changes
+        await material.save();
+      }
     }
 
     return res.status(200).json({

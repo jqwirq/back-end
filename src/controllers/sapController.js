@@ -39,6 +39,23 @@ async function getAllSAP(req, res) {
   }
 }
 
+async function getSAPbyId(req, res) {
+  try {
+    const { _id } = req.params;
+
+    const sap = await SAP.findById(_id);
+
+    if (!sap) {
+      return res.status(404).json({ message: "SAP not found" });
+    }
+
+    res.status(200).json({ message: "Success", sap });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
 module.exports = {
   getAllSAP,
+  getSAPbyId,
 };

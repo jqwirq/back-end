@@ -17,8 +17,8 @@ async function startWeighingProcess(req, res) {
     });
   }
 
-  // Create a new SAP document
-  const newSAP = new SAP({
+  // Create a new Process document
+  const newProcess = new Process({
     no,
     batchNo,
     productNo,
@@ -28,19 +28,22 @@ async function startWeighingProcess(req, res) {
 
   try {
     // Save the document
-    const savedSAP = await newSAP.save();
+    const savedProcess = await newProcess.save();
 
     // Return the newly created document
-    res.status(201).json({ message: "Successfully created.", SAP: savedSAP });
+    res.status(201).json({
+      message: "Process successfully started.",
+      process: savedProcess,
+    });
   } catch (error) {
     // Handle any errors during the save operation
-    res.status(500).json({ message: "Error creating SAP document" });
+    res.status(500).json({ message: "Error starting new process" });
   }
 }
 
 async function stopWeighingProcess(req, res) {
   // Extract the id from the request body
-  const { id, endTime } = req.body;
+  const { id } = req.body;
 
   // Validate input
   if (!id) {
@@ -48,45 +51,54 @@ async function stopWeighingProcess(req, res) {
   }
 
   try {
-    // Find the SAP document by id
-    const sapDocument = await SAP.findById(id);
+    // Find the Process document by id
+    const processDocument = await Process.findById(id);
 
-    // Check if the SAP document was found
-    if (!sapDocument) {
+    // Check if the Process document was found
+    if (!processDocument) {
       return res
         .status(404)
-        .json({ message: "No SAP document found with the provided id" });
+        .json({ message: "No process found with the provided id" });
     }
 
-    if (sapDocument.materials.length === 0) {
-      await SAP.deleteOne({ _id: id });
+    if (processDocument.materials.length === 0) {
+      await Process.deleteOne({ _id: id });
       return res.status(200).json({ message: "No material weighed" });
     }
 
-    if (sapDocument.materials.some(m => m.isCompleted === false)) {
+    if (processDocument.materials.some(m => m.isCompleted === false)) {
       return res.status(409).json({ message: "Process not finished yet" });
     }
 
     // Calculate the duration
-    // const endTime = Date.now();
-    const duration = endTime - sapDocument.startTime; // In milliseconds
+    const endTime = Date.now();
+    const duration = endTime - processDocument.startTime; // In milliseconds
 
-    // Update the SAP document
-    sapDocument.endTime = endTime;
-    sapDocument.duration = duration;
-    sapDocument.isCompleted = true;
+    // Create the completed SAP document
+    const completedSAP = new SAP({
+      ...processDocument._doc, // copying all properties
+      endTime,
+      duration,
+      isCompleted: true,
+    });
 
-    // Save the updated SAP document
-    const updatedSAP = await sapDocument.save();
+    // Save the completed SAP document
+    const savedSAP = await completedSAP.save();
 
-    // Return the updated document
-    res.status(200).json({ message: "Process stopped", SAP: updatedSAP });
+    // Delete the process document
+    await Process.deleteOne({ _id: id });
+
+    // Return the newly created SAP document
+    res
+      .status(200)
+      .json({ message: "Process successfully stopped.", SAP: savedSAP });
   } catch (error) {
     // Handle any errors during the update operation
-    res.status(500).json({ message: "Error stopping SAP document" });
+    res.status(500).json({ message: "Error stopping process" });
   }
 }
 
+// 'startMaterialWeighing' and 'stopMaterialWeighing' functions will remain the same as they only operate on the 'Process' collection.
 async function startMaterialWeighing(req, res) {
   try {
     // Extract relevant fields from request body
@@ -97,11 +109,11 @@ async function startMaterialWeighing(req, res) {
       return res.status(400).json({ message: "Required field is missing" });
     }
 
-    // Find the SAP document with the provided `id`
-    const sap = await SAP.findById(id);
+    // Find the Process document with the provided `id`
+    const process = await Process.findById(id);
 
-    if (!sap) {
-      return res.status(404).json({ message: "SAP document not found" });
+    if (!process) {
+      return res.status(404).json({ message: "Process not found" });
     }
 
     // Create a new material object
@@ -111,71 +123,61 @@ async function startMaterialWeighing(req, res) {
       startTime: Date.now(), // Set the start time as current time
     };
 
-    // Add the material to the `materials` array of the SAP document
-    sap.materials.push(newMaterial);
+    // Add the material to the `materials` array of the Process document
+    process.materials.push(newMaterial);
 
-    // Save the updated SAP document
-    const savedSAP = await sap.save();
+    // Save the updated Process document
+    const savedProcess = await process.save();
 
-    // Return the updated SAP document
+    // Return the updated Process document
     // Also return the _id of the newly added material
-    const material = savedSAP.materials[savedSAP.materials.length - 1];
+    const material = savedProcess.materials[savedProcess.materials.length - 1];
     res.status(200).json({
       message: "Successfully added material.",
-      SAP: savedSAP,
+      process: savedProcess,
       material,
     });
   } catch (error) {
     // Handle any errors during the save operation
-    res.status(500).json({ message: "Error updating SAP document" });
+    res.status(500).json({ message: "Error updating Process document" });
   }
 }
 
 async function stopMaterialWeighing(req, res) {
   try {
-    const { id, materialId, quantity, endTime } = req.body;
+    const { id, materialId, quantity } = req.body;
 
     if (!id || !materialId) {
       return res.status(400).json({ message: "Required field is missing" });
     }
 
-    const sap = await SAP.findById(id);
+    const process = await Process.findById(id);
 
-    if (!sap) {
-      return res.status(404).json({ message: "SAP document not found" });
+    if (!process) {
+      return res.status(404).json({ message: "Process not found" });
     }
 
-    let material = sap.materials.id(materialId);
+    let material = process.materials.id(materialId);
 
     if (!material) {
       return res.status(404).json({ message: "Material not found" });
     }
-    // if (!material.isCompleted) {
-    //   return res.status(404).json({ message: "Process still running" });
-    // }
 
-    // const endTime = Date.now();
+    const endTime = Date.now();
     material.endTime = endTime;
     material.duration = endTime - material.startTime;
     material.quantity = quantity;
     material.isCompleted = true;
 
-    const savedSAP = await sap.save();
-    material = savedSAP.materials.id(materialId);
+    const savedProcess = await process.save();
+    material = savedProcess.materials.id(materialId);
 
     res.status(200).json({
       message: "Successfully updated material.",
-      SAP: savedSAP,
+      process: savedProcess,
       material,
     });
   } catch (error) {
-    res.status(500).json({ message: "Error updating SAP document" });
+    res.status(500).json({ message: "Error updating Process document" });
   }
 }
-
-module.exports = {
-  startWeighingProcess,
-  stopWeighingProcess,
-  startMaterialWeighing,
-  stopMaterialWeighing,
-};

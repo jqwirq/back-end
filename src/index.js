@@ -18,7 +18,7 @@ const {
   stopWeighingProcess,
   startMaterialWeighing,
   stopMaterialWeighing,
-} = require("./controllers/weighingController");
+} = require("./controllers/updateController");
 const { getAllSAP, getSAPbyId } = require("./controllers/sapController");
 const { getPackaging } = require("./controllers/controller");
 

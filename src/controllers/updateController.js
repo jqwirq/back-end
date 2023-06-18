@@ -1,5 +1,6 @@
 const SAP = require("../models/sap");
 const Product = require("../models/product");
+const Process = require("../models/process");
 
 async function startWeighingProcess(req, res) {
   // Extract relevant fields from request body
@@ -181,3 +182,10 @@ async function stopMaterialWeighing(req, res) {
     res.status(500).json({ message: "Error updating Process document" });
   }
 }
+
+module.exports = {
+  startWeighingProcess,
+  stopWeighingProcess,
+  startMaterialWeighing,
+  stopMaterialWeighing,
+};

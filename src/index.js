@@ -31,7 +31,6 @@ router.get("/products", getAllProducts);
 router.get("/product/:no", getProduct);
 router.put("/product/:id", updateProduct);
 router.delete("/product/:id", deleteProduct);
-// router.delete('/product/:productId/material/:materialId', deleteMaterialFromProduct);
 
 router.post("/weighing-process/start", startWeighingProcess);
 router.post("/weighing-process/stop", stopWeighingProcess);
@@ -56,7 +55,6 @@ async function main() {
   server.use(cors());
 
   server.use("/api", router);
-  // tcpServer();
 
   server.listen(port, listenCallback);
 }

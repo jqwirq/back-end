@@ -2,6 +2,11 @@ const SAP = require("../models/sap");
 const Product = require("../models/product");
 const Process = require("../models/process");
 
+const MIN_SAP_LENGTH = 4;
+const MAX_SAP_LENGTH = 10;
+const MIN_BATCH_LENGTH = 4;
+const MAX_BATCH_LENGTH = 10;
+
 async function startWeighingProcess(req, res) {
   // Extract relevant fields from request body
   const { no, batchNo, productNo } = req.body;
@@ -9,6 +14,24 @@ async function startWeighingProcess(req, res) {
   // Validate input
   if (!no || !batchNo || !productNo) {
     return res.status(400).json({ message: "Required field is missing" });
+  }
+
+  if (!/^\d+$/.test(no) || !/^\d+$/.test(batchNo) || !/^\d+$/.test(productNo)) {
+    return res.status(400).json({
+      message: `Input must be a number! Please check your input`,
+    });
+  }
+
+  if (no.length < MIN_SAP_LENGTH || no.length > MAX_SAP_LENGTH) {
+    return res.status(400).json({
+      message: `SAP number (${no}) length should be between ${MIN_SAP_LENGTH} and ${MAX_SAP_LENGTH}. Please check your input`,
+    });
+  }
+
+  if (batchNo.length < MIN_BATCH_LENGTH || batchNo.length > MAX_BATCH_LENGTH) {
+    return res.status(400).json({
+      message: `Batch number (${batchNo}) length should be between ${MIN_BATCH_LENGTH} and ${MAX_BATCH_LENGTH}. Please check your input`,
+    });
   }
 
   const existingProduct = await Product.findOne({ no: productNo });

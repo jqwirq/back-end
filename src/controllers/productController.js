@@ -14,7 +14,7 @@ async function importProductsFromCSVs(req, res) {
     for (const d of data) {
       if (!d.productNo || !/^\d+$/.test(d.productNo)) {
         return res.status(400).json({
-          message: `Product number (${d.productNo}) must be a non-empty number string! Please check your input`,
+          message: `Product number (${d.productNo}) must be a non-empty number! Please check your input`,
         });
       }
 
@@ -224,7 +224,7 @@ async function getAllProducts(req, res) {
       .select("-materials -__v")
       .exec();
 
-    return res.status(200).json(products);
+    return res.status(200).json({ message: "Success", products });
   } catch (e) {
     return res.status(500).json({
       message: "An error occurred while retrieving all products.",
@@ -248,7 +248,7 @@ async function getProduct(req, res) {
       return res.status(404).json({ message: "Product not found." });
     }
 
-    return res.status(200).json(product);
+    return res.status(200).json({ message: "Success", product });
   } catch (e) {
     return res.status(500).json({
       message: "An error occurred while retrieving the product.",

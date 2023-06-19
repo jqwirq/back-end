@@ -183,9 +183,28 @@ async function stopMaterialWeighing(req, res) {
   }
 }
 
+async function getProcess(req, res) {
+  try {
+    const { id } = req.params;
+    const process = await Process.findById(id);
+
+    if (!process) {
+      return res.status(404).json({ message: "Process not found" });
+    }
+
+    res.status(200).json({
+      message: "Successfully load process",
+      process,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error loading Process document" });
+  }
+}
+
 module.exports = {
   startWeighingProcess,
   stopWeighingProcess,
   startMaterialWeighing,
   stopMaterialWeighing,
+  getProcess,
 };

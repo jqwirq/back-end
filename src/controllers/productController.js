@@ -1,5 +1,7 @@
+const bcrypt = require("bcrypt");
 const Product = require("../models/product");
 const Material = require("../models/material");
+const User = require("../models/user");
 
 const MIN_PRODUCT_LENGTH = 4;
 const MAX_PRODUCT_LENGTH = 10;
@@ -276,7 +278,22 @@ function isMaterialDuplicate(a) {
 async function updateProduct(req, res) {
   try {
     const { id: productId } = req.params;
-    const { productNo: newProductNo, materialsNo: newMaterialsNo } = req.body;
+    const {
+      productNo: newProductNo,
+      materialsNo: newMaterialsNo,
+      password,
+    } = req.body;
+
+    // password menggunakan user spv
+    const user = await User.findOne({ username: "spv" });
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+    const isValid = user.isValidPassword(password);
+
+    if (!isValid) {
+      return res.status(400).json({ message: "Invalid password" });
+    }
 
     // Check if new product is empty
     if (newProductNo === "") {
@@ -418,6 +435,17 @@ async function updateProduct(req, res) {
 async function deleteProduct(req, res) {
   try {
     const { id } = req.params;
+    const { password } = req.body;
+
+    const user = await User.findOne({ username: "spv" });
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+    const isValid = user.isValidPassword(password);
+
+    if (!isValid) {
+      return res.status(400).json({ message: "Invalid password" });
+    }
 
     // Find the product
     const product = await Product.findById(id);

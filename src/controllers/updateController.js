@@ -67,7 +67,7 @@ async function startWeighingProcess(req, res) {
 
 async function stopWeighingProcess(req, res) {
   // Extract the id from the request body
-  const { id } = req.body;
+  const { id, endTime } = req.body;
 
   // Validate input
   if (!id) {
@@ -95,7 +95,7 @@ async function stopWeighingProcess(req, res) {
     }
 
     // Calculate the duration
-    const endTime = Date.now();
+    // const endTime = Date.now();
     const duration = endTime - processDocument.startTime; // In milliseconds
 
     // Create the completed SAP document
@@ -169,9 +169,17 @@ async function startMaterialWeighing(req, res) {
 
 async function stopMaterialWeighing(req, res) {
   try {
-    const { id, materialId, quantity } = req.body;
+    const { id, materialId, quantity, endTime, tolerance, targetQty } =
+      req.body;
 
-    if (!id || !materialId) {
+    if (
+      !id ||
+      !materialId ||
+      !quantity ||
+      !endTime ||
+      !tolerance ||
+      !targetQty
+    ) {
       return res.status(400).json({ message: "Required field is missing" });
     }
 
@@ -187,7 +195,22 @@ async function stopMaterialWeighing(req, res) {
       return res.status(404).json({ message: "Material not found" });
     }
 
-    const endTime = Date.now();
+    if (tolerance === 0 || targetQty === 0 || quantity === 0) {
+      return res.status(400).json({ message: "Bad request" });
+    }
+
+    const toleranceValue = (tolerance / 100) * targetQty;
+    const lowerLimit = targetQty - toleranceValue;
+    const upperLimit = targetQty + toleranceValue;
+
+    const isToleranced = quantity >= lowerLimit && quantity <= upperLimit;
+    if (!isToleranced) {
+      return res
+        .status(400)
+        .json({ message: "The weight is out of tolerance!" });
+    }
+
+    // const endTime = Date.now();
     material.endTime = endTime;
     material.duration = endTime - material.startTime;
     material.quantity = quantity;

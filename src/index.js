@@ -21,7 +21,11 @@ const {
   getProcess,
 } = require("./controllers/updateController");
 const { getAllSAP, getSAPbyId } = require("./controllers/sapController");
-const { getPackaging } = require("./controllers/controller");
+const {
+  getPackaging,
+  registerUser,
+  signInUser,
+} = require("./controllers/controller");
 
 const port = process.env.PORT || 3001;
 const dbUrl = process.env.DB_URL || "mongodb://127.0.0.1:27017/weighing";
@@ -31,7 +35,7 @@ router.post("/product", createProduct);
 router.get("/products", getAllProducts);
 router.get("/product/:no", getProduct);
 router.put("/product/:id", updateProduct);
-router.delete("/product/:id", deleteProduct);
+router.put("/delete-product/:id", deleteProduct);
 
 router.post("/weighing-process/start", startWeighingProcess);
 router.post("/weighing-process/stop", stopWeighingProcess);
@@ -43,6 +47,8 @@ router.get("/sap-list", getAllSAP);
 router.get("/sap/:_id", getSAPbyId);
 
 router.get("/packaging", getPackaging);
+router.post("/user/register", registerUser);
+router.post("/user/signing", signInUser);
 
 main();
 

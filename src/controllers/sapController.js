@@ -31,9 +31,10 @@ async function getAllSAP(req, res) {
       }
     }
 
-    const completedSAPs = await SAP.find(query).skip(offset).limit(limit);
+    const total = await SAP.countDocuments(query);
+    const data = await SAP.find(query).skip(offset).limit(limit);
 
-    res.status(200).json(completedSAPs);
+    res.status(200).json({ message: "Success", data, total });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -44,4 +44,30 @@ async function signInUser(req, res) {
   return res.status(200).json({ message: "Logged in successfully" });
 }
 
-module.exports = { getPackaging, registerUser, signInUser };
+async function changePassword(req, res) {
+  const { username, oldPassword, newPassword } = req.body;
+
+  try {
+    // Fetch the user
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(400).json({ message: "User does not exist." });
+    }
+
+    // Check old password
+    if (!user.isValidPassword(oldPassword)) {
+      return res.status(400).json({ message: "Old password is incorrect." });
+    }
+
+    // Hash the new password and update
+    user.password = bcrypt.hashSync(newPassword, 10);
+    await user.save();
+
+    return res.status(200).json({ message: "Password changed successfully." });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error." });
+  }
+}
+
+module.exports = { getPackaging, registerUser, signInUser, changePassword };

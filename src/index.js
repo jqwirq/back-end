@@ -25,6 +25,7 @@ const {
   getPackaging,
   registerUser,
   signInUser,
+  changePassword,
 } = require("./controllers/controller");
 
 const port = process.env.PORT || 3001;
@@ -48,7 +49,8 @@ router.get("/sap/:_id", getSAPbyId);
 
 router.get("/packaging", getPackaging);
 router.post("/user/register", registerUser);
-router.post("/user/signing", signInUser);
+router.post("/user/sign/in", signInUser);
+router.post("/user/password/change", changePassword);
 
 main();
 

@@ -18,16 +18,17 @@ async function getAllSAP(req, res) {
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) {
-        // Start of the day
-        query.createdAt.$gte = new Date(
-          new Date(startDate).setHours(0, 0, 0, 0)
-        );
+        // Start of the day in UTC
+        let startDateTime = new Date(startDate);
+        startDateTime.setUTCHours(0, 0, 0, 0);
+        query.createdAt.$gte = startDateTime.toISOString();
       }
       if (endDate) {
-        // End of the day
-        query.createdAt.$lte = new Date(
-          new Date(endDate).setHours(23, 59, 59, 999)
-        );
+        // Start of the next day in UTC (to include the endDate in the query)
+        let endDateTime = new Date(endDate);
+        endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
+        endDateTime.setUTCHours(0, 0, 0, 0);
+        query.createdAt.$lt = endDateTime.toISOString(); // Notice the change here from $lte to $lt
       }
     }
 

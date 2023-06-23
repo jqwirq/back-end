@@ -68,4 +68,12 @@ const removeOldBackups = () => {
 };
 
 // Schedule backup task every Friday at 4 AM
-schedule.scheduleJob("0 4 * * 5", backupDatabase);
+const scheduleBackup = () => {
+  schedule.scheduleJob("0 4 * * 5", backupDatabase);
+};
+
+module.exports = {
+  backupDatabase,
+  removeOldBackups,
+  scheduleBackup,
+};

@@ -27,6 +27,7 @@ const {
   signInUser,
   changePassword,
 } = require("./controllers/controller");
+const { scheduleBackup } = require("./backup");
 
 const port = process.env.PORT || 3001;
 const dbUrl = process.env.DB_URL || "mongodb://127.0.0.1:27017/weighing";
@@ -60,6 +61,8 @@ async function main() {
   } catch (err) {
     console.error(err.message); // This is bad
   }
+
+  scheduleBackup();
 
   server.use(express.json());
   server.use(cors());

@@ -8,10 +8,7 @@ const backupDir = "C:\\ProgramData\\Weighing";
 const dbUrl = process.env.DB_URL || "mongodb://127.0.0.1:27017/weighing";
 
 // Connect to your database
-mongoose.connect("mongodb://localhost/test", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+mongoose.connect(dbUrl);
 
 const backupDatabase = () => {
   // Get current date to use in backup directory name
@@ -71,6 +68,9 @@ const removeOldBackups = () => {
 const scheduleBackup = () => {
   schedule.scheduleJob("0 4 * * 5", backupDatabase);
 };
+
+backupDatabase();
+removeOldBackups();
 
 module.exports = {
   backupDatabase,

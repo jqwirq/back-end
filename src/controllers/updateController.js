@@ -229,6 +229,45 @@ async function stopMaterialWeighing(req, res) {
   }
 }
 
+async function cancelMaterialWeighing(req, res) {
+  try {
+    const { id, materialId } = req.body;
+
+    // Validate input
+    if (!id || !materialId) {
+      return res.status(400).json({ message: "Required field is missing" });
+    }
+
+    // Find the Process document with the provided `id`
+    const process = await Process.findById(id);
+
+    if (!process) {
+      return res.status(404).json({ message: "Process not found" });
+    }
+
+    // Find the Material document with the provided `materialId`
+    let material = process.materials.id(materialId);
+
+    if (!material) {
+      return res.status(404).json({ message: "Material not found" });
+    }
+
+    // Remove the material from the `materials` array of the Process document
+    material.remove();
+
+    // Save the updated Process document
+    const savedProcess = await process.save();
+
+    res.status(200).json({
+      message: "Successfully cancelled material weighing process.",
+      process: savedProcess,
+    });
+  } catch (error) {
+    // Handle any errors during the save operation
+    res.status(500).json({ message: "Error updating Process document" });
+  }
+}
+
 async function getProcess(req, res) {
   try {
     const { id } = req.params;
@@ -252,5 +291,6 @@ module.exports = {
   stopWeighingProcess,
   startMaterialWeighing,
   stopMaterialWeighing,
+  cancelMaterialWeighing,
   getProcess,
 };

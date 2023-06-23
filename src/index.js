@@ -24,6 +24,7 @@ const {
   startMaterialWeighing,
   stopMaterialWeighing,
   getProcess,
+  cancelMaterialWeighing,
 } = require("./controllers/updateController");
 const { getAllSAP, getSAPbyId } = require("./controllers/sapController");
 const {
@@ -48,6 +49,7 @@ router.post("/weighing-process/start", startWeighingProcess);
 router.post("/weighing-process/stop", stopWeighingProcess);
 router.post("/material-weighing/start", startMaterialWeighing);
 router.post("/material-weighing/stop", stopMaterialWeighing);
+router.post("/material-weighing/cancel", cancelMaterialWeighing);
 router.get("/process/:id", getProcess);
 
 router.get("/sap-list", getAllSAP);

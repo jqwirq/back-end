@@ -232,7 +232,6 @@ async function stopMaterialWeighing(req, res) {
 async function cancelMaterialWeighing(req, res) {
   try {
     const { id, materialId } = req.body;
-
     // Validate input
     if (!id || !materialId) {
       return res.status(400).json({ message: "Required field is missing" });
@@ -253,14 +252,17 @@ async function cancelMaterialWeighing(req, res) {
     }
 
     // Remove the material from the `materials` array of the Process document
-    material.remove();
+    await Process.updateOne(
+      { _id: id },
+      { $pull: { materials: { _id: materialId } } }
+    );
 
-    // Save the updated Process document
-    const savedProcess = await process.save();
+    // Fetch the updated Process document
+    const updatedProcess = await Process.findById(id);
 
     res.status(200).json({
       message: "Successfully cancelled material weighing process.",
-      process: savedProcess,
+      process: updatedProcess,
     });
   } catch (error) {
     // Handle any errors during the save operation

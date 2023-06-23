@@ -5,7 +5,7 @@ const { exec } = require("child_process");
 const path = require("path");
 
 const backupDir = "C:\\ProgramData\\Weighing";
-const dbUrl = process.env.DB_URL || "mongodb://127.0.0.1:27017/weighing";
+const dbUrl = "mongodb://test:test@127.0.0.1:27017/weighing";
 
 // Connect to your database
 mongoose.connect(dbUrl);
@@ -17,7 +17,7 @@ const backupDatabase = () => {
     date.getMonth() + 1
   }-${date.getFullYear()}`;
 
-  const uri = "mongodb://localhost/test"; // Replace with your MongoDB connection string
+  const uri = dbUrl; // Replace with your MongoDB connection string
   const backupPath = path.join(backupDir, dirname);
 
   // Command to create the MongoDB backup

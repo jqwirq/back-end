@@ -5,7 +5,8 @@ const { exec } = require("child_process");
 const path = require("path");
 
 const backupDir = "C:\\ProgramData\\Weighing";
-const dbUrl = "mongodb://test:test@127.0.0.1:27017/weighing";
+
+const dbUrl = "mongodb://khalil:jayateknik@127.0.0.1:27017/weighing";
 
 // Connect to your database
 mongoose.connect(dbUrl);

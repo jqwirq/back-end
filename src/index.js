@@ -34,9 +34,9 @@ const {
   changePassword,
 } = require("./controllers/controller");
 
-const port = process.env.PORT || 3001;
-const dbUrl = process.env.DB_URL || "mongodb://127.0.0.1:27017/weighing";
 const backupDir = "C:\\ProgramData\\Weighing";
+const port = 3001;
+const dbUrl = "mongodb://khalil:jayateknik@127.0.0.1:27017/weighing";
 
 router.post("/products-csv", importProductsFromCSVs);
 router.post("/product", createProduct);

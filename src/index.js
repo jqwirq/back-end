@@ -69,7 +69,7 @@ async function main() {
     console.error(err.message); // This is bad
   }
 
-  // scheduleBackup();
+  scheduleBackup();
 
   server.use(express.json());
   server.use(cors());

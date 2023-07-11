@@ -207,15 +207,18 @@ async function createProduct(req, res) {
 
 async function getAllProducts(req, res) {
   try {
-    const limit = parseInt(req.query.limit) || 0;
-    const offset = parseInt(req.query.offset) || 0;
-    const no = req.query.no || "";
+    let { limit, offset, no } = req.query;
+
+    // Parse limit and offset to integers
+    limit = limit ? parseInt(limit) : undefined;
+    offset = offset ? parseInt(offset) : undefined;
 
     let query = {};
     if (no) {
       query.no = no;
     }
 
+    const total = await Product.countDocuments(query);
     const products = await Product.find(query)
       .skip(offset)
       .limit(limit)
@@ -226,7 +229,7 @@ async function getAllProducts(req, res) {
       .select("-materials -__v")
       .exec();
 
-    return res.status(200).json({ message: "Success", products });
+    return res.status(200).json({ message: "Success", products, total });
   } catch (e) {
     return res.status(500).json({
       message: "An error occurred while retrieving all products.",

@@ -227,6 +227,7 @@ async function getAllProducts(req, res) {
       //   select: "-__v -products",
       // })
       .select("-materials -__v")
+      .sort({ updatedAt: -1 })
       .exec();
 
     return res.status(200).json({ message: "Success", products, total });
